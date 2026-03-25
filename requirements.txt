@@ -2,6 +2,7 @@ flask
 flask-cors
 flask_sqlalchemy
 flask-migrate
+flask-jwt-extended
 gunicorn
 pandas
 numpy
