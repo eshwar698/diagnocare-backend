@@ -46,16 +46,23 @@ def clean_text(text):
 
 # ================= EXTRACT VALUES =================
 def extract_medical_values(text):
+
     patterns = {
         "glucose": r"(glucose|fbs|fasting blood sugar)\s*[:\-]?\s*(\d+)",
-        "cholesterol": r"cholesterol\s*[:\-]?\s*(\d+)",
-        "triglycerides": r"triglycerides?\s*[:\-]?\s*(\d+)",
-        "hdl": r"hdl\s*[:\-]?\s*(\d+)",
-        "ldl": r"ldl\s*[:\-]?\s*(\d+)",
-        "vldl": r"vldl\s*[:\-]?\s*(\d+)",
         "hba1c": r"hba1c\s*[:\-]?\s*(\d+\.?\d*)",
+        "cholesterol": r"cholesterol.*?(\d+)",
+        "triglycerides": r"triglycerides?\s*[:\-]?\s*(\d+)",
+        "hdl": r"\bhdl\b.*?(\d+)",
+        "ldl": r"\bldl\b.*?(\d+)",
+        "vldl": r"\bvldl\b.*?(\d+\.?\d*)",
+        "chol_hdl_ratio": r"total.*hdl.*?(\d+\.?\d*)",
+        "ldl_hdl_ratio": r"ldl\/hdl.*?(\d+\.?\d*)",
         "creatinine": r"creatinine\s*[:\-]?\s*(\d+\.?\d*)",
         "urea": r"urea\s*[:\-]?\s*(\d+\.?\d*)",
+        "hemoglobin": r"hemoglobin\s*[:\-]?\s*(\d+\.?\d*)",
+        "platelets": r"platelet.*?(\d+)",
+        "wbc": r"wbc.*?(\d+)",
+        "rbc": r"rbc.*?(\d+\.?\d*)",
     }
 
     data = {}
@@ -65,53 +72,106 @@ def extract_medical_values(text):
         if match:
             data[key] = match.group(match.lastindex)
 
-    # Blood Pressure
-    bp = re.search(r'(\d{2,3})\/(\d{2,3})', text)
-    if bp:
-        data["bp"] = f"{bp.group(1)}/{bp.group(2)}"
+    # BP (SAFE extraction only when keyword exists)
+    bp_keywords = ["bp", "blood pressure", "b.p"]
+
+    if any(keyword in text.lower() for keyword in bp_keywords):
+        bp = re.search(r'(\d{2,3})\s*\/\s*(\d{2,3})', text)
+        if bp:
+            data["bp"] = f"{bp.group(1)}/{bp.group(2)}"
 
     return data
 
 
 # ================= SUMMARIZE =================
 def generate_summary(text):
+
     values = extract_medical_values(text)
-
-    if not values:
-        sentences = text.split(".")
-        return ". ".join(sentences[:2]).strip()
-
     summary = []
 
     if "glucose" in values:
-        summary.append(f"Glucose level is {values['glucose']} mg/dL.")
+        summary.append(
+            f"Fasting blood glucose recorded at {values['glucose']} mg/dL."
+        )
 
     if "hba1c" in values:
-        summary.append(f"HbA1c recorded at {values['hba1c']}%.")
+        summary.append(
+            f"HbA1c recorded at {values['hba1c']}%."
+        )
 
     if "cholesterol" in values:
         summary.append(
-            f"Total cholesterol is {values['cholesterol']} mg/dL."
+            f"Total cholesterol measured at {values['cholesterol']} mg/dL."
         )
 
     if "triglycerides" in values:
         summary.append(
-            f"Triglycerides level is {values['triglycerides']} mg/dL."
+            f"Triglycerides recorded at {values['triglycerides']} mg/dL."
         )
 
     if "hdl" in values:
-        summary.append(f"HDL is {values['hdl']} mg/dL.")
+        summary.append(
+            f"HDL level recorded at {values['hdl']} mg/dL."
+        )
 
     if "ldl" in values:
-        summary.append(f"LDL is {values['ldl']} mg/dL.")
+        summary.append(
+            f"LDL cholesterol recorded at {values['ldl']} mg/dL."
+        )
 
     if "vldl" in values:
-        summary.append(f"VLDL is {values['vldl']} mg/dL.")
+        summary.append(
+            f"VLDL measured at {values['vldl']} mg/dL."
+        )
+
+    if "chol_hdl_ratio" in values:
+        summary.append(
+            f"Total cholesterol to HDL ratio recorded at {values['chol_hdl_ratio']}."
+        )
+
+    if "ldl_hdl_ratio" in values:
+        summary.append(
+            f"LDL to HDL ratio recorded at {values['ldl_hdl_ratio']}."
+        )
 
     if "bp" in values:
         summary.append(
-            f"Blood pressure recorded as {values['bp']}."
+            f"Blood pressure recorded at {values['bp']}."
         )
+
+    if "creatinine" in values:
+        summary.append(
+            f"Creatinine level recorded at {values['creatinine']}."
+        )
+
+    if "urea" in values:
+        summary.append(
+            f"Urea level recorded at {values['urea']}."
+        )
+
+    if "hemoglobin" in values:
+        summary.append(
+            f"Hemoglobin recorded at {values['hemoglobin']}."
+        )
+
+    if "platelets" in values:
+        summary.append(
+            f"Platelet count recorded at {values['platelets']}."
+        )
+
+    if "wbc" in values:
+        summary.append(
+            f"WBC count recorded at {values['wbc']}."
+        )
+
+    if "rbc" in values:
+        summary.append(
+            f"RBC count recorded at {values['rbc']}."
+        )
+
+    if not summary:
+        sentences = text.split(".")
+        return ". ".join(sentences[:2])
 
     return " ".join(summary)
 
