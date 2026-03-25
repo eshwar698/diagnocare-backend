@@ -27,7 +27,3 @@ requests
 
 python-dateutil
 opencv-python-headless
-
-transformers
-torch
-sentencepiece
