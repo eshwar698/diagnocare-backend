@@ -5,24 +5,12 @@ import uuid
 import re
 
 from PIL import Image
-import pytesseract
-from pdf2image import convert_from_path
-
-
-# Set Tesseract path
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+import fitz  # PyMuPDF
 
 document_bp = Blueprint("document", __name__)
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# 🔥 Load summarizer ONCE
-try:
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn", device=-1)
-except Exception as e:
-    print("MODEL LOAD ERROR:", e)
-    summarizer = None
 
 
 # ================= OCR FUNCTION =================
@@ -30,18 +18,19 @@ def extract_text(filepath):
     text = ""
 
     try:
+        # PDF extraction (cloud friendly)
         if filepath.lower().endswith(".pdf"):
-            images = convert_from_path(
-                filepath,
-                poppler_path=r"C:\poppler\poppler-25.12.0\Library\bin"
-            )
+            doc = fitz.open(filepath)
 
-            for img in images:
-                text += pytesseract.image_to_string(img)
+            for page in doc:
+                text += page.get_text()
 
+        # Image extraction
         else:
             img = Image.open(filepath)
-            text = pytesseract.image_to_string(img)
+
+            # fallback simple extraction
+            text = img.convert("L").tobytes().decode("latin-1", errors="ignore")
 
         return text, 1.0
 
@@ -97,26 +86,21 @@ def upload_and_summarize():
         if file.filename == "":
             return jsonify({"error": "Empty filename"}), 400
 
-        # 🔥 Save file
         filename = secure_filename(file.filename)
         unique_name = f"{uuid.uuid4().hex}_{filename}"
         filepath = os.path.join(UPLOAD_FOLDER, unique_name)
 
         file.save(filepath)
 
-        # 🔥 OCR
         raw_text, confidence = extract_text(filepath)
 
         if not raw_text.strip():
             return jsonify({"error": "No text extracted"}), 422
 
-        # 🔥 Clean
         cleaned = clean_text(raw_text)
 
-        # 🔥 Summary
         summary = generate_summary(cleaned)
 
-        # 🔥 Extract values
         values = extract_medical_values(cleaned)
 
         return jsonify({
