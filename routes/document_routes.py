@@ -7,7 +7,7 @@ import re
 from PIL import Image
 import pytesseract
 from pdf2image import convert_from_path
-from transformers import pipeline
+
 
 # Set Tesseract path
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
@@ -76,29 +76,13 @@ def extract_medical_values(text):
 
 # ================= SUMMARIZE =================
 def generate_summary(text):
-    if summarizer is None:
-        return "Model not loaded"
+    if not text:
+        return "No content found"
 
-    try:
-        text = text[:1500]
+    sentences = text.split(".")
+    summary = ". ".join(sentences[:3])
 
-        chunks = [text[i:i+1000] for i in range(0, len(text), 1000)]
-        summaries = []
-
-        for chunk in chunks:
-            result = summarizer(
-                chunk,
-                max_length=120,
-                min_length=30,
-                do_sample=False
-            )
-            summaries.append(result[0]["summary_text"])
-
-        return " ".join(summaries)
-
-    except Exception as e:
-        print("SUMMARIZATION ERROR:", e)
-        return "Could not summarize"
+    return summary.strip()
 
 
 # ================= ROUTE =================
