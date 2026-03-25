@@ -16,6 +16,7 @@ shap
 joblib
 
 PyPDF2
+pdf2image
 pytesseract
 Pillow
 reportlab
@@ -25,3 +26,4 @@ sqlalchemy
 requests
 
 python-dateutil
+opencv-python-headless
