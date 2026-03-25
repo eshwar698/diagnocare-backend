@@ -68,11 +68,33 @@ def generate_summary(text):
     if not text:
         return "No content found"
 
+    summary_parts = []
+
+    # Extract Glucose
+    g = re.search(r'glucose\s*[:\-]?\s*(\d+)', text, re.IGNORECASE)
+    if g:
+        summary_parts.append(f"Glucose level is {g.group(1)} mg/dL.")
+
+    # Extract BP
+    bp = re.search(r'(\d{2,3})\/(\d{2,3})', text)
+    if bp:
+        summary_parts.append(
+            f"Blood pressure recorded as {bp.group(1)}/{bp.group(2)}."
+        )
+
+    # Extract Cholesterol
+    chol = re.search(r'cholesterol\s*[:\-]?\s*(\d+)', text, re.IGNORECASE)
+    if chol:
+        summary_parts.append(
+            f"Cholesterol level is {chol.group(1)} mg/dL."
+        )
+
+    if summary_parts:
+        return " ".join(summary_parts)
+
+    # fallback
     sentences = text.split(".")
-    summary = ". ".join(sentences[:3])
-
-    return summary.strip()
-
+    return ". ".join(sentences[:2]).strip()
 
 # ================= ROUTE =================
 @document_bp.route("/upload-report", methods=["POST"])
