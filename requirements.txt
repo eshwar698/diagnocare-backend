@@ -1,0 +1,13 @@
+flask
+flask-cors
+flask_sqlalchemy
+gunicorn
+pandas
+numpy
+scikit-learn
+PyPDF2
+pytesseract
+Pillow
+xgboost
+shap
+joblib
