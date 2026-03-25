@@ -46,55 +46,74 @@ def clean_text(text):
 
 # ================= EXTRACT VALUES =================
 def extract_medical_values(text):
+    patterns = {
+        "glucose": r"(glucose|fbs|fasting blood sugar)\s*[:\-]?\s*(\d+)",
+        "cholesterol": r"cholesterol\s*[:\-]?\s*(\d+)",
+        "triglycerides": r"triglycerides?\s*[:\-]?\s*(\d+)",
+        "hdl": r"hdl\s*[:\-]?\s*(\d+)",
+        "ldl": r"ldl\s*[:\-]?\s*(\d+)",
+        "vldl": r"vldl\s*[:\-]?\s*(\d+)",
+        "hba1c": r"hba1c\s*[:\-]?\s*(\d+\.?\d*)",
+        "creatinine": r"creatinine\s*[:\-]?\s*(\d+\.?\d*)",
+        "urea": r"urea\s*[:\-]?\s*(\d+\.?\d*)",
+    }
+
     data = {}
 
-    g = re.search(r'glucose\s*[:\-]?\s*(\d+)', text, re.IGNORECASE)
-    if g:
-        data["glucose"] = int(g.group(1))
+    for key, pattern in patterns.items():
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            data[key] = match.group(match.lastindex)
 
+    # Blood Pressure
     bp = re.search(r'(\d{2,3})\/(\d{2,3})', text)
     if bp:
         data["bp"] = f"{bp.group(1)}/{bp.group(2)}"
-
-    chol = re.search(r'cholesterol\s*[:\-]?\s*(\d+)', text, re.IGNORECASE)
-    if chol:
-        data["cholesterol"] = int(chol.group(1))
 
     return data
 
 
 # ================= SUMMARIZE =================
 def generate_summary(text):
-    if not text:
-        return "No content found"
+    values = extract_medical_values(text)
 
-    summary_parts = []
+    if not values:
+        sentences = text.split(".")
+        return ". ".join(sentences[:2]).strip()
 
-    # Extract Glucose
-    g = re.search(r'glucose\s*[:\-]?\s*(\d+)', text, re.IGNORECASE)
-    if g:
-        summary_parts.append(f"Glucose level is {g.group(1)} mg/dL.")
+    summary = []
 
-    # Extract BP
-    bp = re.search(r'(\d{2,3})\/(\d{2,3})', text)
-    if bp:
-        summary_parts.append(
-            f"Blood pressure recorded as {bp.group(1)}/{bp.group(2)}."
+    if "glucose" in values:
+        summary.append(f"Glucose level is {values['glucose']} mg/dL.")
+
+    if "hba1c" in values:
+        summary.append(f"HbA1c recorded at {values['hba1c']}%.")
+
+    if "cholesterol" in values:
+        summary.append(
+            f"Total cholesterol is {values['cholesterol']} mg/dL."
         )
 
-    # Extract Cholesterol
-    chol = re.search(r'cholesterol\s*[:\-]?\s*(\d+)', text, re.IGNORECASE)
-    if chol:
-        summary_parts.append(
-            f"Cholesterol level is {chol.group(1)} mg/dL."
+    if "triglycerides" in values:
+        summary.append(
+            f"Triglycerides level is {values['triglycerides']} mg/dL."
         )
 
-    if summary_parts:
-        return " ".join(summary_parts)
+    if "hdl" in values:
+        summary.append(f"HDL is {values['hdl']} mg/dL.")
 
-    # fallback
-    sentences = text.split(".")
-    return ". ".join(sentences[:2]).strip()
+    if "ldl" in values:
+        summary.append(f"LDL is {values['ldl']} mg/dL.")
+
+    if "vldl" in values:
+        summary.append(f"VLDL is {values['vldl']} mg/dL.")
+
+    if "bp" in values:
+        summary.append(
+            f"Blood pressure recorded as {values['bp']}."
+        )
+
+    return " ".join(summary)
 
 # ================= ROUTE =================
 @document_bp.route("/upload-report", methods=["POST"])
