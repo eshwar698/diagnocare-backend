@@ -16,14 +16,12 @@ shap
 joblib
 
 PyPDF2
-pdf2image
-pytesseract
+PyMuPDF
 Pillow
-reportlab
 
 sqlalchemy
-
 requests
-
 python-dateutil
 opencv-python-headless
+
+reportlab
