@@ -1,6 +1,7 @@
 flask
 flask-cors
 flask_sqlalchemy
+flask-migrate
 gunicorn
 pandas
 numpy
@@ -11,3 +12,4 @@ Pillow
 xgboost
 shap
 joblib
+python-dotenv
