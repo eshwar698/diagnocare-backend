@@ -81,7 +81,7 @@ def add_metrics():
 
     try:
         db.session.add(metric)
-        db.session.commit()
+        db.session.flush()
 
         feature_df, feature_mode = build_features(user_id)
         if feature_df is None:
@@ -98,7 +98,7 @@ def add_metrics():
         insights = generate_insights(baseline, glucose)
         recommended_times = learn_checking_pattern(user_id)
         emergency_alert = check_emergency(glucose, data["BP"])
-
+        db.session.commit()
         return jsonify({
             "risk_level": prediction_result["risk_level"],
             "mode": mode,

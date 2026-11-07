@@ -7,8 +7,8 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     name= db.Column(db.String(100), nullable=True)
     gender= db.Column(db.String(10), nullable=True)
-    sleep = db.Column(db.String(50), nullable=True) 
-    diet = db.Column(db.String(50), nullable=True) 
+    sleep = db.Column(db.String(50), nullable=True)
+    diet = db.Column(db.String(50), nullable=True)
     stress = db.Column(db.String(50), nullable=True)
 class UserProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)

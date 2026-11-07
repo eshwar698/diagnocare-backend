@@ -7,26 +7,62 @@ from config import db
 medicine_bp = Blueprint("medicine", __name__)
 
 
+
 @medicine_bp.route("/add", methods=["POST"])
 @jwt_required()
 def add_medicine():
-
     user_id = int(get_jwt_identity())
+    data = request.get_json(silent=True)
 
-    data = request.get_json()
+    # Validate JSON body
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be valid JSON"}), 400
 
-    medicine = MedicineReminder(
-        user_id=user_id,
-        medicine_name=data["medicine_name"],
-        time=data["time"],
-        before_food=data.get("before_food", False),
-        after_food=data.get("after_food", False)
-    )
+    # Validate required fields
+    medicine_name = data.get("medicine_name")
+    medicine_time = data.get("time")
 
-    db.session.add(medicine)
-    db.session.commit()
+    if not isinstance(medicine_name, str) or not medicine_name.strip():
+        return jsonify({"error": "medicine_name is required"}), 400
 
-    return jsonify({"message": "Medicine reminder added"}), 201
+    if not isinstance(medicine_time, str) or not medicine_time.strip():
+        return jsonify({"error": "time is required"}), 400
+
+    # Validate optional food flags
+    before_food = data.get("before_food", False)
+    after_food = data.get("after_food", False)
+
+    if not isinstance(before_food, bool) or not isinstance(after_food, bool):
+        return jsonify({
+            "error": "before_food and after_food must be boolean values"
+        }), 400
+
+    try:
+        medicine = MedicineReminder(
+            user_id=user_id,
+            medicine_name=medicine_name.strip(),
+            time=medicine_time.strip(),
+            before_food=before_food,
+            after_food=after_food
+        )
+
+        db.session.add(medicine)
+        db.session.commit()
+
+        return jsonify({"message": "Medicine reminder added"}), 201
+
+    except Exception:
+        db.session.rollback()
+
+        import logging
+        logging.getLogger(__name__).exception(
+            "Medicine reminder creation failed"
+        )
+
+        return jsonify({
+            "error": "Unable to create medicine reminder"
+        }), 500
+
 
 
 @medicine_bp.route("/list", methods=["GET"])

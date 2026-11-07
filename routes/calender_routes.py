@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import DailyMetrics
-
+from datetime import datetime
 calendar_bp = Blueprint("calendar", __name__)
 
 
@@ -30,26 +30,74 @@ from models import DoctorAppointment
 from config import db
 
 
+
+
 @calendar_bp.route("/add-appointment", methods=["POST"])
 @jwt_required()
 def add_appointment():
 
     user_id = int(get_jwt_identity())
+    data = request.get_json(silent=True)
 
-    data = request.get_json()
+    if not isinstance(data, dict):
+        return jsonify({"error": "Request body must be valid JSON"}), 400
 
-    appointment = DoctorAppointment(
-        user_id=user_id,
-        doctor_name=data["doctor_name"],
-        appointment_date=data["date"],
-        appointment_time=data["time"],
-        notes=data.get("notes", "")
-    )
+    doctor_name = data.get("doctor_name")
+    appointment_date = data.get("date")
+    appointment_time = data.get("time")
 
-    db.session.add(appointment)
-    db.session.commit()
+    if not isinstance(doctor_name, str) or not doctor_name.strip():
+        return jsonify({"error": "doctor_name is required"}), 400
 
-    return jsonify({"message": "Appointment added"}), 201
+    if not isinstance(appointment_date, str) or not appointment_date.strip():
+        return jsonify({"error": "date is required"}), 400
+
+    if not isinstance(appointment_time, str) or not appointment_time.strip():
+        return jsonify({"error": "time is required"}), 400
+
+    try:
+        parsed_date = datetime.strptime(
+            appointment_date.strip(), "%Y-%m-%d"
+        ).date()
+
+        if parsed_date < datetime.now().date():
+            return jsonify({
+            "error": "Appointment date cannot be in the past"
+            }), 400
+
+    except ValueError:
+        return jsonify({"error": "Date must be YYYY-MM-DD"}), 400
+
+    try:
+        datetime.strptime(appointment_time.strip(), "%H:%M")
+    except ValueError:
+        return jsonify({"error": "Time must be HH:MM"}), 400
+
+    try:
+        appointment = DoctorAppointment(
+            user_id=user_id,
+            doctor_name=doctor_name.strip(),
+            appointment_date=appointment_date.strip(),
+            appointment_time=appointment_time.strip(),
+            notes=data.get("notes", "")
+        )
+
+        db.session.add(appointment)
+        db.session.commit()
+
+        return jsonify({"message": "Appointment added"}), 201
+
+    except Exception:
+        db.session.rollback()
+
+        import logging
+        logging.getLogger(__name__).exception(
+            "Appointment creation failed"
+        )
+
+        return jsonify({"error": "Unable to create appointment"}), 500
+
+
 
 
 @calendar_bp.route("/appointments", methods=["GET"])

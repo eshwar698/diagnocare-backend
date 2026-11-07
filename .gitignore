@@ -30,3 +30,14 @@ reports/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Additional local environments
+venv311/
+
+# QA artifacts
+QA_Monthly_Report.pdf
+Diagnocare_Report.pdf
+document_edge_tests.py
+upload_test.py
+invalid.txt
+routes/metric_routes - Copy.py
