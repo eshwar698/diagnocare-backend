@@ -1,156 +1,226 @@
-# DIAGNOCARE — Diabetes Risk Monitoring Backend
+# DIAGNOCARE — Diabetes Risk Monitoring Platform
 
-> A backend service for monitoring risk trends in people already diagnosed with diabetes. DIAGNOCARE is a monitoring and decision-support prototype—not a diagnostic tool or a diabetes-prediction system.
+**A healthcare monitoring platform for tracking glucose trends, managing patient health records, and supporting diabetes risk monitoring through machine learning.**
+
+> DIAGNOCARE is a monitoring and decision-support prototype for individuals already diagnosed with diabetes. It is not a diabetes diagnostic or prediction system.
 
 ## Overview
 
-DIAGNOCARE brings patient-record management, glucose tracking, medication and reminder workflows, reporting, and ML-assisted risk monitoring behind a Flask REST API. The backend connects application data and a temporal XGBoost model, with SHAP-based explanations intended to make model outputs more interpretable.
+DIAGNOCARE is a healthcare application designed to help users monitor their diabetes-related health indicators over time. Its backend integrates health-record workflows, glucose monitoring, medication management, reminders, reporting, and machine-learning-assisted risk monitoring through a Flask REST API.
 
-## Capabilities
+The system combines temporal feature engineering with an XGBoost model and SHAP-based explainability to support more interpretable risk-monitoring outputs.
 
-- **Authentication & profiles:** JWT-based authentication and profile endpoints.
-- **Health metrics:** recording and retrieving patient metrics, including glucose-related measurements.
-- **Glucose monitoring:** monitoring workflows and trend-related services.
-- **Medication & reminders:** medication management and reminder endpoints/services.
-- **Reports & documents:** report generation and document-related routes.
-- **Risk monitoring:** feature engineering and inference using a temporal XGBoost model; explanation support through SHAP.
-- **API organization:** Flask Blueprints separate route groups from service logic.
+## Key Features
 
-> Exact endpoint payloads and behavior are defined in the source under `routes/` and `services/`. This README intentionally avoids inventing endpoint contracts.
+- **Authentication & User Profiles** — JWT-based authentication and profile management.
+- **Health Metrics Management** — recording and retrieving patient health measurements.
+- **Glucose Monitoring** — glucose recording, monitoring, and trend-related workflows.
+- **Medication Management** — medication reminder creation and management.
+- **Appointment & Reminder Management** — calendar and reminder functionality.
+- **Reports & Documents** — monthly health reports and PDF reporting workflows.
+- **ML-Assisted Risk Monitoring** — temporal feature engineering and XGBoost-based risk assessment.
+- **Explainable AI** — SHAP-based explanations for model outputs.
+- **REST API Architecture** — modular Flask routes and service-layer organization.
 
-## Architecture
+## System Architecture
 
 ```text
-Client application (Flutter)
-        │  HTTP / REST
-        ▼
-Flask application (app.py)
-        ├── Auth & profile routes
-        ├── Metrics & glucose-monitor routes
-        ├── Calendar, medicine & reminder routes
-        ├── Reports & document routes
-        └── Services
-             ├── Feature engineering
-             ├── ML inference / model loader
-             ├── Trends & insights
-             └── Reports / reminders
-        │
-        ├── SQLAlchemy ── SQLite (local default)
-        └── Temporal XGBoost model + feature metadata
+                 Flutter Client
+                       |
+                 REST API
+                       |
+               Flask Backend
+                       |
+       +---------------+----------------+
+       |               |                |
+ Authentication    Health Data       Management
+       |            Monitoring        Services
+       |               |                |
+       +---------------+----------------+
+                       |
+               Service Layer
+                       |
+       +---------------+----------------+
+       |               |                |
+ Feature           Temporal          Reporting
+ Engineering       XGBoost           Services
+       |               |
+       +------- SHAP Explanations -----+
+                       |
+                SQLAlchemy ORM
+                       |
+                 SQLite / DB
 ```
 
-## Technology stack
+## Machine Learning Pipeline
 
-- **Language:** Python
-- **API:** Flask, Flask-RESTful, Flask Blueprints, Flask-CORS
-- **Persistence:** SQLAlchemy, Flask-SQLAlchemy, SQLite (default local configuration)
-- **Authentication:** Flask-JWT-Extended
-- **ML / data:** pandas, NumPy, scikit-learn, XGBoost, SHAP, joblib
-- **Deployment:** Gunicorn; deployment configuration via `Procfile`
+The backend incorporates a temporal machine-learning pipeline for diabetes risk monitoring.
 
-## Repository layout
+1. Health measurements are collected through application workflows.
+2. Temporal features are constructed from patient measurement history.
+3. The feature pipeline prepares inputs for the trained XGBoost model.
+4. The model produces risk-monitoring outputs.
+5. SHAP supports interpretation of contributing model features.
+6. Monitoring outputs can be incorporated into application workflows.
+
+**Important:** Model outputs are experimental decision-support signals and are not clinically validated diagnoses.
+
+## Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Backend | Python, Flask, Flask-RESTful |
+| API | REST, Flask Blueprints, Flask-CORS |
+| Database | SQLAlchemy, SQLite |
+| Authentication | Flask-JWT-Extended |
+| Machine Learning | XGBoost, scikit-learn |
+| Explainability | SHAP |
+| Data Processing | pandas, NumPy |
+| Model Utilities | joblib |
+| Deployment | Gunicorn |
+
+## Project Structure
 
 ```text
-.
-├── app.py                  # Flask app and Blueprint registration
-├── config.py               # Application/database/JWT configuration
-├── models.py                # SQLAlchemy data models
-├── predict_temporal.py      # Temporal inference utilities
-├── routes/                  # API route Blueprints
-├── services/                # Business logic and ML/report services
-├── utils/                   # Shared utilities and validators
-├── temporal_xgb_model.pkl   # Active trained model artifact
-├── label_encoder.pkl        # Label encoder artifact
-├── feature_columns.pkl      # Model feature-column metadata
+diagnocare-backend/
+├── app.py
+├── config.py
+├── models.py
+├── predict_temporal.py
+├── routes/
+│   ├── authentication
+│   ├── metrics
+│   ├── glucose monitoring
+│   ├── calendar
+│   ├── medication
+│   ├── reminders
+│   ├── reports
+│   └── documents
+├── services/
+│   ├── feature engineering
+│   ├── ML inference
+│   ├── trends and insights
+│   ├── reminders
+│   └── reporting
+├── utils/
 ├── requirements.txt
 └── Procfile
 ```
 
-## Local setup
+## Getting Started
 
-### 1. Clone and create a virtual environment
+### Prerequisites
+
+- Python 3.10+
+- pip
+- Git
+
+### Installation
 
 ```bash
 git clone https://github.com/eshwar698/diagnocare-backend.git
 cd diagnocare-backend
+
 python -m venv .venv
 ```
 
-Activate it:
+Activate the environment:
 
+**Windows PowerShell**
 ```powershell
-# Windows PowerShell
 .venv\Scripts\Activate.ps1
 ```
 
+**Linux / macOS**
 ```bash
-# macOS / Linux
 source .venv/bin/activate
 ```
 
-### 2. Install dependencies
+Install dependencies:
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
+### Environment Configuration
 
-Set a unique secret before running the app. Do not commit real secrets.
+Configure a secure JWT secret before starting the application.
 
+**Windows PowerShell**
 ```powershell
-# Windows PowerShell (current terminal)
-$env:JWT_SECRET_KEY = "replace-with-a-long-random-secret"
+$env:JWT_SECRET_KEY = "your-secure-secret"
 ```
 
+**Linux / macOS**
 ```bash
-# macOS / Linux
-export JWT_SECRET_KEY="replace-with-a-long-random-secret"
+export JWT_SECRET_KEY="your-secure-secret"
 ```
 
-The current local configuration uses SQLite by default. Database tables are created by the application entry point when run directly.
+Never commit actual credentials or production secrets.
 
-### 4. Run locally
+### Run the Backend
 
 ```bash
 python app.py
 ```
 
-The development server listens on `http://127.0.0.1:5000` by default (or the port supplied through `PORT`). Do not use Flask's development server for production deployment.
+The local development server runs at:
+
+```text
+http://127.0.0.1:5000
+```
+
+## API Modules
+
+The backend is organized into modular route groups:
+
+| Module | Responsibility |
+|---|---|
+| Authentication | User authentication and profile workflows |
+| Metrics | Patient health measurements |
+| Glucose Monitoring | Glucose recording and monitoring |
+| Calendar | Appointment management |
+| Medication | Medication reminder management |
+| Reminders | Reminder workflows |
+| Reports | Health report generation |
+| Documents | Document upload and report processing |
+
+Exact request payloads and response schemas are maintained in the corresponding route implementations.
 
 ## Deployment
 
-The repository includes a `Procfile` for Gunicorn-based hosting. Configure the platform with:
+The repository includes a Gunicorn `Procfile` for deployment.
 
-- `JWT_SECRET_KEY`: a strong, unique secret value.
-- `PORT`: supplied by the hosting platform where applicable.
-- A persistent database and storage strategy appropriate to the deployment environment.
+Production deployment requires:
 
-**Important:** SQLite on an ephemeral host filesystem is not suitable for durable production data. Use a managed/persistent database for production and configure the application accordingly.
+- Secure JWT configuration.
+- A persistent database.
+- Persistent file storage where uploads are retained.
+- Environment-specific configuration.
+- Appropriate application server configuration.
 
-## Model artifacts
+SQLite on an ephemeral hosting filesystem should not be used for persistent production health data.
 
-The backend currently loads these artifacts through `services/model_loader.py`:
+## Project Status
 
-- `temporal_xgb_model.pkl`
-- `label_encoder.pkl`
-- `feature_columns.pkl`
+DIAGNOCARE is an academic collaborative project and an experimental healthcare monitoring prototype.
 
-Keep these files version-compatible with the model code and feature-generation logic. Pickle/joblib artifacts should only be loaded from trusted sources.
+Current limitations include:
 
-## Project status & limitations
-
-- This is an academic/collaborative software project and a prototype for diabetes risk monitoring.
-- Model outputs are experimental decision-support signals and must not be interpreted as medical diagnoses or treatment recommendations.
-- Model performance depends on the training data, feature construction, and deployment context; it does not establish clinical validity.
-- The repository contains the backend. The Flutter client and research materials may be maintained separately.
-- The research paper associated with the project is **not published or accepted**; do not treat it as a publication.
+- ML outputs are not clinically validated.
+- Model performance does not establish clinical reliability.
+- Predictions and explanations must not replace professional medical judgment.
+- Data persistence and security requirements must be addressed before production healthcare deployment.
 
 ## Contributions
 
-My contribution focused on backend development, API integration, ML pipeline integration, debugging, and deployment coordination within the collaborative project. I also initiated preparation of a research manuscript; its publication status remains unpublished.
+My contributions include backend development, REST API implementation, validation and error-handling improvements, integration of ML inference and explainability workflows, debugging, QA, and deployment coordination.
 
-## License
+## Disclaimer
 
-No license is currently specified. Unless a license is added, the repository is not automatically open for reuse, redistribution, or modification by others.
+DIAGNOCARE is intended for educational and research purposes. It is not a medical device and must not be used to diagnose, treat, or make clinical decisions about diabetes.
+
+---
+
+**Repository:** [eshwar698/diagnocare-backend](https://github.com/eshwar698/diagnocare-backend)
