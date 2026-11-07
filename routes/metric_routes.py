@@ -52,8 +52,8 @@ def add_metrics():
         return jsonify({"error": "Glucose is required"}), 400
     try:
         glucose = float(data["Glucose"])
-    if not isfinite(glucose):
-        raise ValueError
+        if not isfinite(glucose):
+            raise ValueError
     except (TypeError, ValueError):
         return jsonify({"error": "Glucose must be a valid number"}), 400
 
